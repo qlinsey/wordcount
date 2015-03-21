@@ -5,19 +5,23 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.List;
 
 public class WordCount extends Thread {
 
+	private boolean finish = false;
 	private final File file;
-	final ConcurrentLinkedQueue<Thread> register;
-	final ConcurrentLinkedQueue<SortedWordChain> stream;
+	final List<LineProcessor> register;
+	final WordMerger [] mergers;
 
-	public WordCount(ConcurrentLinkedQueue<Thread> register,
-			ConcurrentLinkedQueue<SortedWordChain> stream, File file) {
+	public WordCount(List<LineProcessor> register, WordMerger [] mergers, File file) {
 		this.file = file;
 		this.register = register;
-		this.stream = stream;
+		this.mergers = mergers;
+	}
+
+	public boolean isFinish() {
+		return finish;
 	}
 
 	@Override
@@ -30,12 +34,13 @@ public class WordCount extends Thread {
 			while (line != null) {
 				line = br.readLine();
 				if (line != null) {
-					LineProcessor p = new LineProcessor(this.stream, line);
-					p.start();
+					// Each LineProcessor thread will handle each line
+					LineProcessor p = new LineProcessor(this.mergers, line);
+					// Register the LineProcessor thread so that we can keep track of it
 					register.add(p);
+					p.start();
 				}
 			}
-
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -48,43 +53,9 @@ public class WordCount extends Thread {
 					e.printStackTrace();
 				}
 			}
+			finish = true;
 		}
 
 	}
 
-	public static void main(String[] args) {
-
-		File inputFolder = new File(".", "wc_input");
-
-		if (!inputFolder.exists() || !inputFolder.isDirectory()) {
-			System.out.println("Cannot find input folder[wc_input]");
-			System.exit(1);
-		}
-
-		final ConcurrentLinkedQueue<Thread> register = new ConcurrentLinkedQueue<Thread>();
-		final ConcurrentLinkedQueue<SortedWordChain> stream = new ConcurrentLinkedQueue<SortedWordChain>();
-
-		MergeWordChain merger = new MergeWordChain(stream);
-		merger.start();
-
-		for (File file : inputFolder.listFiles()) {
-			if (file.isFile()) {
-				WordCount wc = new WordCount(register, stream, file);
-				wc.start();
-				register.add(wc);
-			}
-		}
-
-		try {
-			for (Thread t : register){
-				t.join();
-			}
-			while (!stream.isEmpty()) {
-				stream.wait(100);
-			}
-			merger.quit();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-	}
 }

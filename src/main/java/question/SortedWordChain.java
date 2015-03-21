@@ -1,5 +1,10 @@
 package question;
 
+/**
+ * 
+ * Immutable sorted word chain containing of words in ascending order. Each Chain know how many Words are in this node chain and the
+ * largest Word in this chain.
+ */
 public class SortedWordChain {
 
 	private final Word word;
@@ -32,20 +37,10 @@ public class SortedWordChain {
 
 	public String toString() {
 		StringBuffer buffer = new StringBuffer();
-		buffer.append("t=");
-		buffer.append(this.getWordCounts());
-		buffer.append(",l=");
-		buffer.append(this.largestWord);
-		buffer.append(",w=");
 		buffer.append(word);
 		SortedWordChain tmp = next;
 		while (tmp != null) {
 			buffer.append("->");
-			buffer.append("t=");
-			buffer.append(tmp.getWordCounts());
-			buffer.append(",l=");
-			buffer.append(tmp.largestWord);
-			buffer.append(",w=");
 			buffer.append(tmp.getWord());
 			tmp = tmp.next;
 		}

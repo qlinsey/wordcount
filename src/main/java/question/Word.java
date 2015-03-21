@@ -1,5 +1,9 @@
 package question;
 
+/**
+ * Immutable object of a word containing the number of occurances for that word 
+ *
+ */
 public final class Word {
 
 	private final String word;
@@ -17,6 +21,12 @@ public final class Word {
 
 	public int getCount() {
 		return count;
+	}
+	
+	public int getBucket() {
+		if (this.word != null && this.word.length() > 0)
+			return this.word.toCharArray()[0]-'a';
+		else return -1;
 	}
 	
 	public String toString() {
