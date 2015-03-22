@@ -5,23 +5,22 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class WordCount extends Thread {
 
-	private boolean finish = false;
 	private final File file;
-	final List<LineProcessor> register;
+	private final ExecutorService executor = Executors.newFixedThreadPool(1000);
 	final WordMerger [] mergers;
 
-	public WordCount(List<LineProcessor> register, WordMerger [] mergers, File file) {
+	public WordCount(WordMerger [] mergers, File file) {
 		this.file = file;
-		this.register = register;
 		this.mergers = mergers;
 	}
-
-	public boolean isFinish() {
-		return finish;
+	
+	public ExecutorService getExecutor() {
+		return executor;
 	}
 
 	@Override
@@ -36,9 +35,7 @@ public class WordCount extends Thread {
 				if (line != null) {
 					// Each LineProcessor thread will handle each line
 					LineProcessor p = new LineProcessor(this.mergers, line);
-					// Register the LineProcessor thread so that we can keep track of it
-					register.add(p);
-					p.start();
+					executor.execute(p);
 				}
 			}
 		} catch (FileNotFoundException e) {
@@ -53,7 +50,6 @@ public class WordCount extends Thread {
 					e.printStackTrace();
 				}
 			}
-			finish = true;
 		}
 
 	}

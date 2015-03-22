@@ -1,9 +1,12 @@
 package question;
 
+import java.io.BufferedWriter;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
 
 public class StartCount {
 
@@ -16,11 +19,8 @@ public class StartCount {
 			System.exit(1);
 		}
 
-		// Thread register to keep track of all the LineProcessor threads
-		final List<LineProcessor> register = new ArrayList<LineProcessor>();
-
 		// Thread register to keep track of all the WordCount threads
-		final List<WordCount> wcRegister = new ArrayList<WordCount>();
+		final ConcurrentLinkedQueue<WordCount> wcRegister = new ConcurrentLinkedQueue<WordCount>();
 		
 		// Create 26 bucket of streams for pruning word beginning with letter a - z
 		WordMerger [] mergers = new WordMerger[26];
@@ -33,28 +33,24 @@ public class StartCount {
 		}
 		
 		// Processing each file in the input directory
-		for (File file : inputFolder.listFiles()) {
-			if (file.isFile()) {
+		File[] files = inputFolder.listFiles();
+		for (int i = 0; i < files.length; i++) {
+			if (files[i].isFile()) {
 				// Each WordCount thread will handle one file
-				WordCount wc = new WordCount(register, mergers, file);
-				wc.start();
+				WordCount wc = new WordCount(mergers, files[i]);
 				wcRegister.add(wc);
 			}
+			
 		}
+
 		
-		// Wait until all the WordCount threads have finish processing
+		// Wait until all the threads have finish processing
 		for (WordCount t : wcRegister) {
 			try {
+				t.start();
 				t.join();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-		
-		// Wait until all the LineProcessor threads have finish processing
-		for (LineProcessor t : register) {
-			try {
-				t.join();
+				t.getExecutor().shutdown();
+				t.getExecutor().awaitTermination(60, TimeUnit.HOURS);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -68,6 +64,28 @@ public class StartCount {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
+		}
+		
+		PrintWriter out = null;
+		
+		try
+		{
+		out = new PrintWriter(new BufferedWriter(new FileWriter(new File("wc_output","wc_output.txt"))));
+		
+		// Collect the merged results from the mergers
+		for (int i = 0; i < mergers.length; i++) {
+			SortedWordChain sortList = mergers[i].getHead();
+			while (sortList != null) {
+				out.print(sortList.getWord().getWord());
+				out.print(",");
+				out.println(sortList.getWord().getCount());
+				sortList = sortList.getNext();
+			}
+		}
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			out.close();
 		}
 		
 	}

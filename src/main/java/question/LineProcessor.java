@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class LineProcessor extends Thread {
+public class LineProcessor implements Runnable {
 
 	private final String line;
 	final WordMerger [] mergers;
@@ -28,6 +28,10 @@ public class LineProcessor extends Thread {
 		this.mergers= mergers;
 	}
 
+	public String getLine() {
+		return line;
+	}
+
 	@Override
 	public void run() {
 
@@ -38,8 +42,7 @@ public class LineProcessor extends Thread {
 		List<String> keys = new ArrayList<String>(sortedMap.keySet());
 		
 		SortedWordChain head = null;
-		Word largestWord = null;
-		int cnt = 0, bucket = -1;
+		int bucket = -1;
 		
 		// Start from the largest word in this line
 		for (int i = keys.size() - 1; i >= 0; i--) {
@@ -48,15 +51,11 @@ public class LineProcessor extends Thread {
 			
 			if (bucket != word.getBucket()) {
 				if (head != null) dropWords(head);
-				cnt = 0;
 				head = null;
-				largestWord = null;
 				bucket = word.getBucket();
 			} 
 			
-			largestWord = (head == null) ? word : head.getLargestWord();
-			
-			head = new SortedWordChain(word, ++cnt, largestWord, head);
+			head = new SortedWordChain(word, head);
 		}
 		
 		if (head != null) dropWords(head);
