@@ -70,7 +70,7 @@ public class StartCount {
 		
 		try
 		{
-		out = new PrintWriter(new BufferedWriter(new FileWriter(new File("wc_output","wc_output.txt"))));
+		out = new PrintWriter(new BufferedWriter(new FileWriter(new File("wc_output","wc_result.txt"))));
 		
 		// Collect the merged results from the mergers
 		// Each merge potentially can be deployed onto multiple JVM
