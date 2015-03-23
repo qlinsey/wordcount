@@ -73,6 +73,9 @@ public class StartCount {
 		out = new PrintWriter(new BufferedWriter(new FileWriter(new File("wc_output","wc_output.txt"))));
 		
 		// Collect the merged results from the mergers
+		// Each merge potentially can be deployed onto multiple JVM
+		// For this demo, all the mergers are deployed on the same JVM
+		// thefore there are a limit to the test input file size.
 		for (int i = 0; i < mergers.length; i++) {
 			SortedWordChain sortList = mergers[i].getHead();
 			while (sortList != null) {
